@@ -5,7 +5,8 @@ from rest_framework import status
 from django.contrib.auth import logout
 from accounts.services.accounts_services import AccountService
 from .permissions import IsAdmin, IsManager
-from accounts.serializers import RegisterSerializer
+from accounts.serializers import RegisterSerializer, UserSerializer
+from accounts.models import Profile
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -160,18 +161,41 @@ class ChangePasswordView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 class UsersByRoleView(APIView):
-    permission_classes = [IsAuthenticated, IsManager]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
+       
         try:
-            service_response = AccountService.get_users_by_role(
-                request.query_params.get('role', 'customer')
-            )
-            status_code = service_response.get("status_code", status.HTTP_200_OK)
-            return Response(service_response, status=status_code)
+            user_profile = request.user.profile
+            if user_profile.role not in ['admin', 'manager']:
+                return Response({
+                    "success": False,
+                    "message": "Unauthorized access",
+                    "data": {}
+                }, status=status.HTTP_403_FORBIDDEN)
+            role = request.query_params.get('role')
+            if role:
+                profiles = Profile.objects.filter(role=role)
+            else:
+                profiles = Profile.objects.all()
+
+            # Collect related users
+            users = [profile.user for profile in profiles]
+            serializer = UserSerializer(users, many=True)
+
+            return Response(serializer.data, status=200)
+
         except Exception as e:
-            return Response({
-                "success": False,
-                "message": "Failed to fetch users",
-                "error": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': f'An error occurred: {str(e)}'}, status=500)
+            
+        #     service_response = AccountService.get_users_by_role(
+        #         request.query_params.get('role', 'customer')
+        #     )
+        #     status_code = service_response.get("status_code", status.HTTP_200_OK)
+        #     return Response(service_response, status=status_code)
+        # except Exception as e:
+        #     return Response({
+        #         "success": False,
+        #         "message": "Failed to fetch users",
+        #         "error": str(e)
+        #     }, status=status.HTTP_400_BAD_REQUEST)

@@ -24,7 +24,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'role', 'phone_number']
+        fields = ['username', 'email', 'password', 'role', 'phone_number',]
 
     def create(self, validated_data):
         # Extract role before creating user (since it's not a User model field)
@@ -39,7 +39,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()  # Signal creates profile here
         
         # Update the profile's role
-        user.profile.role = role
+        profile = user.profile
+        profile.role = role
+        if phone_number:
+            profile.phone_number = phone_number 
+        # if address:
+        #     profile.address = address
         user.profile.save()
         
         return user
