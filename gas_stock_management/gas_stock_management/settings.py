@@ -43,7 +43,11 @@ INSTALLED_APPS = [
     'orders',          
     'payments',        
     'notifications',  
-    'reports',    
+    'reports', 
+    'deliveries',
+    'rest_framework',
+    'rest_framework_simplejwt',
+   
 ]
 
 MIDDLEWARE = [
@@ -55,6 +59,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
 
 ROOT_URLCONF = 'gas_stock_management.urls'
 
